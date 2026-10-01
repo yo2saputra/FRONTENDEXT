@@ -1,0 +1,552 @@
+<?= $this->extend('clinic_template'); ?>
+
+<?= $this->section('style'); ?>
+<!-- Toastr -->
+<link rel="stylesheet" href="<?= base_url('plugins/toastr/toastr.min.css') ?>">
+<!-- Button datatable -->
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+<!-- iCheck for checkboxes and radio inputs -->
+<link rel="stylesheet" href="../../plugins/icheck-bootstrap/icheck-bootstrap.min.css">
+<style>
+    /* set width action button crud */
+    .btn-fix-w {
+        width: 60px;
+        padding-top: 0px;
+        padding-bottom: 0px;
+    }
+
+    /* set font size dropdown select2 */
+    select.form-control-sm~.select2-container--default {
+        font-size: .720rem !important;
+    }
+
+    /* set font size input form */
+    .form-control-sm {
+        font-size: .720rem !important;
+    }
+</style>
+<?= $this->endSection('style'); ?>
+
+<?= $this->section('content'); ?>
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1></h1>
+                </div>
+                <div class="col-sm-6">
+                    <!-- <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="#">Master</a></li>
+                        <li class="breadcrumb-item active">Field Value</li>
+                    </ol> -->
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+
+            <div class="row">
+                <!-- left column -->
+                <div class="col-md-12">
+
+                    <!-- jquery validation -->
+                    <div class="card card-outline card-info">
+
+                        <div class="card-body">
+
+                            <div class="card-title">
+                            </div>
+
+                            <span id="viewdata"></span>
+                        </div>
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="modalform" tabindex="" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h4 class="modal-title" id="exampleModalLabel"></h4>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+
+
+
+                                    <form method="post" id="data_form" autocomplete="off">
+                                        <?= csrf_field(); ?>
+                                        <div class="modal-body">
+                                            <div class="mb-3 row">
+                                                <label for="item_cd" class="col-sm-2 col-form-label">Item Code</label>
+                                                <div class="col-sm-4">
+                                                    <input type="text" class="form-control form-control-sm" id="item_cd" name="item_cd">
+                                                    <span class="error invalid-feedback errorItem_cd">
+                                                    </span>
+                                                </div>
+                                                <label for="item_nm" class="col-sm-2 col-form-label">Item Name</label>
+                                                <div class="col-sm-4">
+                                                    <input type="text" class="form-control form-control-sm" id="item_nm" name="item_nm">
+                                                    <span class="error invalid-feedback errorItem_nm">
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3 row">
+                                                <?= $cb_itemtyp ?>
+                                                <?= $cb_uombase ?>
+                                                <!-- <label for="uom_base" class="col-sm-2 col-form-label">Unit</label>
+                                                <div class="col-sm-4">
+                                                    <input type="text" class="form-control form-control-sm" id="uom_base" name="uom_base">
+                                                    <span class="error invalid-feedback errorUom_base">
+                                                    </span>
+                                                </div> -->
+                                            </div>
+                                            <div class="mb-3 row">
+                                                <label for="barcode" class="col-sm-2 col-form-label">Barcode</label>
+                                                <div class="col-sm-4">
+                                                    <input type="text" class="form-control form-control-sm" id="barcode" name="barcode">
+                                                    <span class="error invalid-feedback errorBarcode">
+                                                    </span>
+                                                </div>
+                                                <label for="remark" class="col-sm-2 col-form-label">Remark</label>
+                                                <div class="col-sm-4">
+                                                    <input type="text" class="form-control form-control-sm" id="remark" name="remark">
+                                                    <span class="error invalid-feedback errorRemark">
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3 row">
+                                                <?= $cb_itemcatcd ?>
+                                                <div class="col-sm-2"></div>
+                                                <div class="col-sm-4">
+                                                    <div class="icheck-primary d-inline">
+                                                        <input type="checkbox" id="deleted" name="deleted" checked>
+                                                        <label for="deleted">Deleted</label>
+                                                    </div>
+                                                    <span class="error invalid-feedback errorDeleted">
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3 row">
+                                                <div class="col-sm-2"></div>
+                                                <div class="col-sm-4">
+                                                    <div class="icheck-primary d-inline">
+                                                        <input type="checkbox" id="isvat" name="isvat" checked>
+                                                        <label for="isvat">Kena Pajak</label>
+                                                    </div>
+                                                    <span class="error invalid-feedback errorIsvat">
+                                                    </span>
+                                                </div>
+                                                <div class="col-sm-2"></div>
+                                                <div class="col-sm-4">
+                                                </div>
+                                            </div>
+
+
+                                        </div>
+                                        <div class="modal-footer">
+                                            <input type="hidden" id="hidden_id" name="hidden_id" />
+                                            <input type="hidden" id="action" name="action" value="Add" />
+                                            <button type="submit" name="submit" id="submit_button" class="btn btn-sm btn-primary" value="Simpan"></button>
+                                            <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Tutup</button>
+                                        </div>
+
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+                    <!-- /.card -->
+
+                </div>
+                <!--/.col (left) -->
+                <!-- right column -->
+                <div class="col-md-6">
+
+                </div>
+                <!--/.col (right) -->
+            </div>
+            <!-- /.row -->
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+
+<?= $this->endSection('content'); ?>
+
+<?= $this->section('script'); ?>
+
+<!-- Toastr -->
+<script src="<?= base_url('plugins/toastr/toastr.min.js') ?>"></script>
+
+<!-- Button datatable -->
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+<!-- set menu name by active-menu -->
+<script>
+    $('#active-menu').html($('p#active-menu').html()); // set top navbar
+    $(document).prop("title", $('p#active-menu').html()); // set title
+</script>
+
+<script>
+    function tmstitem() {
+        $.ajax({
+            method: "get",
+            url: "<?= site_url('/tmstitem/fetchAll'); ?>",
+            success: function(data) {
+                $('#viewdata').html(data);
+            }
+        });
+    }
+    $(document).ready(function() {
+        tmstitem()
+
+        $(document).on('click', '#add_record', function() {
+            //set input
+            $('#item_typ').removeAttr('disabled');
+            $('#item_cat_cd').removeAttr('disabled');
+            $('#item_cd').removeAttr('disabled');
+            $('#item_nm').removeAttr('disabled');
+            $('#uom_base').removeAttr('disabled');
+            $('#remark').removeAttr('disabled');
+            $('#barcode').removeAttr('disabled');
+            $('#deleted').removeAttr('disabled');
+            $('#deleted').removeAttr('checked');
+            $('#isvat').removeAttr('disabled');
+            $('#isvat').removeAttr('checked');
+            $('#item_cd').removeAttr('readonly');
+
+            $('#data_form')[0].reset();
+
+            $('#item_cd').attr('readonly', '');
+
+            //set error validation
+            $('#item_typ').removeClass('is-invalid');
+            $('#item_cat_cd').removeClass('is-invalid');
+            $('#item_cd').removeClass('is-invalid');
+            $('#item_nm').removeClass('is-invalid');
+            $('#uom_base').removeClass('is-invalid');
+            $('#remark').removeClass('is-invalid');
+            $('#barcode').removeClass('is-invalid');
+            $('.errorItem_typ').html('');
+            $('.errorItem_cat_cd').html('');
+            $('.errorItem_cd').html('');
+            $('.errorItem_nm').html('');
+            $('.errorUom_base').html('');
+            $('.errorRemark').html('');
+            $('.errorBarcode').html('');
+
+            //set selected data select2
+            $('#item_typ').val(' ');
+            $('#item_typ').trigger('change');
+            $('#item_cat_cd').val(' ');
+            $('#item_cat_cd').trigger('change');
+            $('#uom_base').val(' ');
+            $('#uom_base').trigger('change');
+
+            //set modal & form
+            $('.modal-title').text('Tambah Data');
+            $('#action').val('Add');
+            $('#submit_button').show();
+            $('#submit_button').val('Simpan');
+            $('#submit_button').html('Simpan');
+            $('#modalform').modal('show');
+
+
+        });
+
+        $('#data_form').on('submit', function(event) {
+            event.preventDefault();
+            $.ajax({
+                url: "<?= site_url('tmstitem/action'); ?>",
+                method: "POST",
+                data: $(this).serialize(),
+                // data: {
+                //     nama: nama,
+                //     value: value,
+                //     desc: desc,
+                //     action: action
+                // },
+                dataType: "JSON",
+                beforeSend: function() {
+                    $('#submit_button').prop('disabled', true);
+                    $('#submit_button').html('<i class="fa fa-spin fa-spinner"></i>');
+                },
+                complete: function() {
+                    $('#submit_button').prop('disabled', false);
+                    $('#submit_button').html($('#submit_button').val());
+                },
+                success: function(response) {
+
+                    if (response.error) {
+                        if (response.error.item_cd) {
+                            $('#item_cd').addClass('is-invalid');
+                            $('.errorItem_cd').html(response.error.item_cd);
+                        } else {
+                            $('#item_cd').removeClass('is-invalid');
+                            $('.errorItem_cd').html('');
+                        }
+                        if (response.error.item_nm) {
+                            $('#item_nm').addClass('is-invalid');
+                            $('.errorItem_nm').html(response.error.item_nm);
+                        } else {
+                            $('#item_nm').removeClass('is-invalid');
+                            $('.errorItem_nm').html('');
+                        }
+                        if (response.error.uom_base) {
+                            $('#uom_base').addClass('is-invalid');
+                            $('.errorUom_base').html(response.error.uom_base);
+                        } else {
+                            $('#uom_base').removeClass('is-invalid');
+                            $('.errorUom_base').html('');
+                        }
+                        if (response.error.remark) {
+                            $('#remark').addClass('is-invalid');
+                            $('.errorRemark').html(response.error.remark);
+                        } else {
+                            $('#remark').removeClass('is-invalid');
+                            $('.errorRemark').html('');
+                        }
+                        if (response.error.barcode) {
+                            $('#barcode').addClass('is-invalid');
+                            $('.errorBarcode').html(response.error.barcode);
+                        } else {
+                            $('#barcode').removeClass('is-invalid');
+                            $('.errorBarcode').html('');
+                        }
+                        if (response.error.item_typ) {
+                            $('#item_typ').addClass('is-invalid');
+                            $('.errorItem_typ').html(response.error.item_typ);
+                        } else {
+                            $('#item_typ').removeClass('is-invalid');
+                            $('.errorItem_typ').html('');
+                        }
+                        if (response.error.item_cat_cd) {
+                            $('#item_cat_cd').addClass('is-invalid');
+                            $('.errorItem_cat_cd').html(response.error.item_cat_cd);
+                        } else {
+                            $('#item_cat_cd').removeClass('is-invalid');
+                            $('.errorItem_cat_cd').html('');
+                        }
+                    } else {
+                        //sweet alert
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: response.success,
+                            //footer: '<a href="">Why do I have this issue?</a>'
+                        });
+
+                        //set error validation
+                        $('#item_cd').removeClass('is-invalid');
+                        $('#item_nm').removeClass('is-invalid');
+                        $('#uom_base').removeClass('is-invalid');
+                        $('#remark').removeClass('is-invalid');
+                        $('#barcode').removeClass('is-invalid');
+                        $('#item_typ').removeClass('is-invalid');
+                        $('#item_cat_cd').removeClass('is-invalid');
+                        $('#item_cd').val('');
+                        $('#item_nm').val('');
+                        $('#uom_base').val('');
+                        $('#remark').val('');
+                        $('#barcode').val('');
+                        $('#item_typ').val('');
+                        $('#item_cat_cd').val('');
+                        $('#deleted').removeAttr('checked');
+                        $('#isvat').removeAttr('checked');
+
+                        tmstitem();
+                        $('#modalform').modal('hide');
+                    }
+                },
+            })
+        });
+
+        $(document).on('click', '.view', function() {
+            var item_cd = $(this).data('item_cd');
+
+            $.ajax({
+                url: "<?= site_url('tmstitem/fetchSingleData'); ?>",
+                method: "GET",
+                data: {
+                    item_cd: item_cd
+                },
+                dataType: "JSON",
+                success: function(response) {
+                    //set input
+                    $('#item_cd').attr('disabled', '');
+                    $('#item_nm').attr('disabled', '');
+                    $('#uom_base').attr('disabled', '');
+                    $('#remark').attr('disabled', '');
+                    $('#barcode').attr('disabled', '');
+                    $('#deleted').attr('disabled', '');
+                    $('#deleted').removeAttr('checked');
+                    $('#isvat').attr('disabled', '');
+                    $('#isvat').removeAttr('checked');
+                    $('#item_typ').attr('disabled', '');
+                    $('#item_cat_cd').attr('disabled', '');
+
+                    $('#data_form')[0].reset();
+
+                    //set data from response record
+                    $('#item_cd').val(response.data.item_cd);
+                    $('#item_nm').val(response.data.item_nm);
+                    //$('#uom_base').val(response.data.uom_base);//lama
+                    $('#remark').val(response.data.remark);
+                    $('#barcode').val(response.data.barcode);
+                    (response.data.deleted === 1 ? $('#deleted').attr('checked', 'checked') : $('#deleted').removeAttr('checked'));
+                    (response.data.isvat === 1 ? $('#isvat').attr('checked', 'checked') : $('#isvat').removeAttr('checked'));
+
+                    //set error validation
+                    $('#item_cd').removeClass('is-invalid');
+                    $('#item_nm').removeClass('is-invalid');
+                    //$('#uom_base').removeClass('is-invalid');//lama
+                    $('#remark').removeClass('is-invalid');
+                    $('#barcode').removeClass('is-invalid');
+                    $('.errorItem_cd').html('');
+                    $('.errorItem_nm').html('');
+                    //$('.errorUom_base').html('');//lama
+                    $('.errorRemark').html('');
+                    $('.errorBarcode').html('');
+
+                    //set selected data select2
+                    $('#item_typ').val(response.data.item_typ);
+                    $('#item_typ').trigger('change');
+                    $('#item_cat_cd').val(response.data.item_cat_cd);
+                    $('#item_cat_cd').trigger('change');
+                    $('#uom_base').val(response.data.uom_base);
+                    $('#uom_base').trigger('change');
+
+                    //set modal & form
+                    $('.modal-title').text('Lihat Data');
+                    $('#action').val('View');
+                    $('#submit_button').hide();
+                    $('#submit_button').val('Lihat');
+                    $('#submit_button').html('Lihat');
+                    $('#modalform').modal('show');
+
+                }
+            })
+        });
+
+        $(document).on('click', '.edit', function() {
+            var item_cd = $(this).data('item_cd');
+
+            $.ajax({
+                url: "<?= site_url('tmstitem/fetchSingleData'); ?>",
+                method: "GET",
+                data: {
+                    item_cd: item_cd
+                },
+                dataType: "JSON",
+                success: function(response) {
+                    //set input
+                    $('#item_typ').removeAttr('disabled');
+                    $('#item_cat_cd').removeAttr('disabled');
+                    $('#item_cd').removeAttr('disabled');
+                    $('#item_nm').removeAttr('disabled');
+                    $('#uom_base').removeAttr('disabled');
+                    $('#remark').removeAttr('disabled');
+                    $('#barcode').removeAttr('disabled');
+                    $('#deleted').removeAttr('disabled');
+                    $('#deleted').removeAttr('checked');
+                    $('#isvat').removeAttr('disabled');
+                    $('#isvat').removeAttr('checked');
+                    $('#item_cd').attr('readonly', '');
+
+
+                    $('#data_form')[0].reset();
+
+                    //set data from response record
+                    $('#item_cd').val(response.data.item_cd);
+                    $('#item_nm').val(response.data.item_nm);
+                    //$('#uom_base').val(response.data.uom_base);//lama
+                    $('#remark').val(response.data.remark);
+                    $('#barcode').val(response.data.barcode);
+                    (response.data.deleted === 1 ? $('#deleted').attr('checked', 'checked') : $('#deleted').removeAttr('checked'));
+                    (response.data.isvat === 1 ? $('#isvat').attr('checked', 'checked') : $('#isvat').removeAttr('checked'));
+
+
+                    //set error validation
+                    $('#item_typ').removeClass('is-invalid');
+                    $('#item_cat_cd').removeClass('is-invalid');
+                    $('#item_cd').removeClass('is-invalid');
+                    $('#item_nm').removeClass('is-invalid');
+                    $('#uom_base').removeClass('is-invalid');
+                    $('#remark').removeClass('is-invalid');
+                    $('#barcode').removeClass('is-invalid');
+                    $('.errorItem_typ').html('');
+                    $('.errorItem_cat_cd').html('');
+                    $('.errorItem_cd').html('');
+                    $('.errorItem_nm').html('');
+                    $('.errorUom_base').html('');
+                    $('.errorRemark').html('');
+                    $('.errorBarcode').html('');
+
+                    //set selected data select2
+                    $('#item_typ').val(response.data.item_typ);
+                    $('#item_typ').trigger('change');
+                    $('#item_cat_cd').val(response.data.item_cat_cd);
+                    $('#item_cat_cd').trigger('change');
+                    $('#uom_base').val(response.data.uom_base);
+                    $('#uom_base').trigger('change');
+
+                    //set modal & form
+                    $('.modal-title').text('Ubah Data');
+                    $('#action').val('Edit');
+                    $('#submit_button').show();
+                    $('#submit_button').val('Simpan');
+                    $('#submit_button').html('Simpan');
+                    $('#modalform').modal('show');
+
+                }
+            })
+        });
+
+        $(document).on('click', '.delete', function() {
+            var item_cd = $(this).data('item_cd');
+            if (confirm("Are you sure you want to remove it?")) {
+                $.ajax({
+                    url: "<?= site_url('tmstitem/delete'); ?>",
+                    method: "POST",
+                    data: {
+                        item_cd: item_cd
+                    },
+                    dataType: "JSON",
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: response.success,
+                            //footer: '<a href="">Why do I have this issue?</a>'
+                        });
+                        tmstitem();
+                        setTimeout(function() {
+                            $('#message').html('');
+                        }, 5000);
+                    }
+                })
+            }
+        });
+
+    });
+</script>
+
+
+
+<?= $this->endSection('script'); ?>

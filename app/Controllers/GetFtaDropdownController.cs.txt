@@ -1,0 +1,77 @@
+﻿using Dapper;
+using Microsoft.AspNetCore.Mvc;
+using ReaderMedicelle.Data;
+using System.Data;
+using System.Dynamic;
+
+namespace ReaderMedicelle.Controllers
+{
+    [ApiController]
+    [Route("api/getftadropdown")]
+    public class GetFtaDropdownController : ControllerBase
+    {
+        private readonly DapperContext _context;
+
+        public GetFtaDropdownController(DapperContext context)
+        {
+            _context = context;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetFtaDropdown([FromQuery] string action)
+        {
+            try
+            {
+                using var connection = _context.MedicelleConn();
+
+                var parameters = new DynamicParameters();
+                parameters.Add("@action", action);
+
+                var query = Request.Query;
+                foreach (var key in query.Keys)
+                {
+                    if (key != "action")
+                    {
+                        parameters.Add("@" + key, query[key].ToString());
+                    }
+                }
+
+                var result = await connection.QueryAsync<dynamic>(
+                    "sp_get_fta_dropdown",
+                    parameters,
+                    commandType: CommandType.StoredProcedure
+                );
+
+                var data = result.Select(r =>
+                {
+                    var dict = new Dictionary<string, object>();
+                    var props = r as IDictionary<string, object>;
+                    if (props != null)
+                    {
+                        foreach (var prop in props)
+                        {
+                            dict[prop.Key] = prop.Value ?? "";
+                        }
+                    }
+                    return dict;
+                }).ToList();
+
+                return Ok(new
+                {
+                    success = true,
+                    count = data.Count,
+                    data = data
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = ex.Message,
+                    stackTrace = ex.StackTrace
+                });
+            }
+        }
+    }
+}

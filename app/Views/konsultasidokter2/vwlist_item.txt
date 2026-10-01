@@ -1,0 +1,21 @@
+--sp_helptext select * from vwlist_item  
+CREATE VIEW vwlist_item AS    
+ SELECT obat_cd as kode_item, (upper(obat) + char(13) + char(10) + '(' + lower(b.fld_desc) + ')')  as nama_item  
+ , 50000 as harga, 'LY_002_001' as Category  
+ , 'LY_002' as Layanan from tmst_obat a  
+ LEFT JOIN (select fld_desc, fld_valu from tfield_value where fld_nm = 'nm_generik') b  
+ ON a.nm_generik = b.fld_valu  
+  
+ UNION ALL          
+   
+ SELECT kode_paket as kode_item, upper('paket ' + nama_paket) as nama_item  
+ , 7500000 as harga,  'LY_001_001' as Category  
+ , 'LY_001' as Layanan from tmst_paket   
+  
+ UNION ALL          
+   
+ SELECT item_cd as kode_item, upper(item_nm) as nama_item  
+ , 50000 as harga,  'LY_001_001' as Category  
+ , 'LY_001' as Layanan from tmst_item   
+ where item_typ = '238'  
+  

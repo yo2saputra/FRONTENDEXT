@@ -1,0 +1,891 @@
+<?= $this->extend('clinic_template'); ?>
+
+<?= $this->section('style'); ?>
+<!-- Toastr -->
+<link rel="stylesheet" href="<?= base_url('plugins/toastr/toastr.min.css') ?>">
+<!-- Button datatable -->
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+<!-- iCheck for checkboxes and radio inputs -->
+<link rel="stylesheet" href="../../plugins/icheck-bootstrap/icheck-bootstrap.min.css">
+<style>
+    /* set width action button crud */
+    .btn-fix-w {
+        width: 60px;
+        padding-top: 0px;
+        padding-bottom: 0px;
+    }
+
+    /* set font size dropdown select2 */
+    select.form-control-sm~.select2-container--default {
+        font-size: .720rem !important;
+    }
+
+    /* set font size input form */
+    .form-control-sm {
+        font-size: .720rem !important;
+    }
+
+    fieldset.scheduler-border {
+        border: 1px groove #ddd !important;
+        padding: 0 1.4em 1.4em 1.4em !important;
+        margin: 0 0 1.5em 0 !important;
+        -webkit-box-shadow: 0px 0px 0px 0px #000;
+        box-shadow: 0px 0px 0px 0px #000;
+    }
+
+    legend.scheduler-border {
+        font-size: 1.2em !important;
+        font-weight: bold !important;
+        text-align: left !important;
+        width: auto;
+        padding: 0 10px;
+        border-bottom: none;
+    }
+
+    /* #scan_input {
+        background-color: #F9F39A;
+    } */
+</style>
+<?= $this->endSection('style'); ?>
+
+<?= $this->section('content'); ?>
+
+<?php
+$session = session();
+?>
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1></h1>
+                </div>
+                <div class="col-sm-6">
+                    <!-- <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="#">Master</a></li>
+                        <li class="breadcrumb-item active">Field Value</li>
+                    </ol> -->
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+
+            <div class="row">
+                <!-- left column -->
+                <div class="col-md-12">
+
+                    <!-- jquery validation -->
+                    <div class="card card-outline card-info">
+
+                        <div class="card-body">
+
+                            <div class="card-title">
+                            </div>
+
+                            <div class="mb-3 row">
+                                <label for="no_kwitansi" class="col-sm-2 col-form-label">NO. KWITANSI</label>
+                                <div class="col-sm-3">
+                                    <input type="text" class="form-control form-control-sm" id="no_kwitansi" name="no_kwitansi" style="direction: ltr;" value="<?= $session->get('no_kwitansi_edit') ?>" disabled>
+                                    <span class="error invalid-feedback errorno_kwitansi">
+                                    </span>
+                                </div>
+                                <div class="col-sm-2"></div>
+                                <label for="tgl_kwitansi" class="col-sm-2 col-form-label">TGL. KWITANSI</label>
+                                <div class="col-sm-3">
+                                    <input type="text" class="form-control form-control-sm" id="tgl_kwitansi" name="tgl_kwitansi" value="<?= $session->get('no_registrasi_edit') ?>" style="direction: rtl;" disabled>
+                                    <span class="error invalid-feedback errortgl_kwitansi">
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mb-3 row">
+                                <label for="no_registrasi" class="col-sm-2 col-form-label">NO. REGISTRASI</label>
+                                <div class="input-group input-group-sm col-sm-3">
+                                    <input type="text" class="form-control" id="no_registrasi" style="direction: ltr;" value="<?= $session->get('no_registrasi') !== '' ? $session->get('no_registrasi') : '' ?>" disabled>
+                                    <span class="input-group-append">
+                                        <button type="button" class="btn btn-success btn-flat" id="registrasi"><i class='fas fa-search'></i></button>
+                                    </span>
+                                </div>
+                                <div class="col-sm-2"></div>
+                                <label for="user" class="col-sm-2 col-form-label">PETUGAS</label>
+                                <div class="col-sm-3">
+                                    <input type="text" class="form-control form-control-sm" id="user" name="user" value="<?= $session->get('usr_id'); ?>" style="direction: rtl;" disabled>
+                                    <span class="error invalid-feedback errorUser">
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="mb-1 row">
+                                <div class="col-sm-7"></div>
+                                <div class="col-sm-5 text-right">
+                                    <strong style="font-size: 2rem;">Rp <span id="grandTotal">0.00</span></strong>
+                                </div>
+                            </div>
+
+                            <div class="mb-3 row">
+
+                                <!-- <label for="item_cd" class="col-sm-2 col-form-label">NO. REGISTRASI</label> -->
+                                <div class="input-group input-group-sm col-sm-5">
+                                    <input type="text" class="form-control" id="scan_input" style="direction: ltr;" placeholder="BARCODE SCANNER">
+                                    <span class="input-group-append">
+                                        <button type="button" class="btn btn-info btn-flat" id="item"><i class='fas fa-barcode'></i></button>
+                                    </span>
+                                </div>
+                                <div class="col-sm-7"></div>
+                            </div>
+
+
+                            <div class="mb-3 row">
+
+                                <div class="form-row" style="display: none;">
+                                    <div class="form-group col-md-4">
+                                        <label for="itemInput">Item:</label>
+                                        <input type="text" class="form-control" id="itemInput" placeholder="Item">
+                                    </div>
+                                    <div class="form-group col-md-2">
+                                        <label for="quantityInput">Quantity:</label>
+                                        <input type="number" min="1" class="form-control" id="quantityInput" placeholder="Quantity">
+                                    </div>
+                                    <div class="form-group col-md-2">
+                                        <label for="rateInput">Rate:</label>
+                                        <input type="number" class="form-control" id="rateInput" placeholder="Rate">
+                                    </div>
+                                    <div class="form-group col-md-2">
+                                        <label for="discountInput">Discount:</label>
+                                        <input type="number" class="form-control" id="discountInput" placeholder="Discount">
+                                    </div>
+                                    <div class="form-group col-md-2">
+                                        <label for="taxInput">Tax:</label>
+                                        <input type="number" class="form-control" id="taxInput" placeholder="Tax">
+                                    </div>
+                                </div>
+
+                                <table class="table tabledetail">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">
+                                                <input type="checkbox" id="selectAllCheckbox" onclick="selectAllItems()">
+                                            </th>
+                                            <th scope="col" class="">Code</th>
+                                            <th scope="col">Item</th>
+                                            <th scope="col" class="text-right">Jumlah</th>
+                                            <th scope="col" class="text-right">Tarif</th>
+                                            <th scope="col">Potongan</th>
+                                            <th scope="col">Pajak</th>
+                                            <th scope="col" class="text-right">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+
+                            </div>
+                            <div class="mt-3">
+                                <button class="btn btn-primary mb-3" onclick="addItem()" style="display: none;">ADD</button>
+                                <button class="btn btn-warning mb-3 billing">LIST BILLING</button>
+                                <button class="btn btn-info mb-3" onclick="postData()">DEPOSIT</button>
+                                <button class="btn btn-danger mb-3" onclick="deleteSelectedItems()">DELETE</button>
+                                <button class="btn btn-success mb-3" onclick="postData()">SAVE</button>
+
+                            </div>
+
+
+                        </div>
+
+                        <!-- Modal List Registrasi-->
+                        <div class="modal fade" id="modalformregistrasi" tabindex="" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h4 class="modal-title" id="exampleModalLabel"></h4>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <span id="live_fetchDataRegistrasi"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal List Item-->
+                        <div class="modal fade" id="modalformitem" tabindex="" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h4 class="modal-title" id="exampleModalLabel"></h4>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <span id="live_fetchDataItem"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal List Billing -->
+                        <div class="modal fade" id="modalformbilling" tabindex="" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h4 class="modal-title" id="exampleModalLabel"></h4>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <span id="live_fetchDataBilling"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+                    <!-- /.card -->
+
+                </div>
+                <!--/.col (left) -->
+
+                <!-- right column -->
+                <!-- <div class="col-md-4"> -->
+                <!-- jquery validation -->
+                <!-- <div class="card card-outline card-info">
+
+                        <div class="card-body">
+                        </div>
+
+                    </div> -->
+                <!-- </div> -->
+                <!--/.col (right) -->
+
+            </div>
+            <!-- /.row -->
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+
+<?= $this->endSection('content'); ?>
+
+<?= $this->section('script'); ?>
+
+<!-- Toastr -->
+<script src="<?= base_url('plugins/toastr/toastr.min.js') ?>"></script>
+
+<!-- Button datatable -->
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+<!-- set menu name by active-menu -->
+<script>
+    $('#active-menu').html($('p#active-menu').html()); // set top navbar
+    $(document).prop("title", $('p#active-menu').html()); // set title
+</script>
+
+<script>
+    function registrasi() {
+        $.ajax({
+            method: "get",
+            url: "<?= site_url('/tregistrasi/fetchAll'); ?>",
+            success: function(data) {
+                $('#viewdata').html(data);
+            }
+        });
+    }
+</script>
+
+<script>
+    function convertDateIndo(date) {
+        var d_arr = date.split("/");
+        var fromDate = d_arr[1] + '/' + d_arr[0] + '/' + d_arr[2];
+        dateNew = fromDate.split(' ')[0];
+        // var fromDate = date.toLocaleDateString('en-GB');
+        return dateNew;
+    }
+
+    function convertDateUs(date) {
+        var d_arr = date.split("/");
+        var fromDate = d_arr[1] + '/' + d_arr[0] + '/' + d_arr[2];
+        dateNew = fromDate.split(' ')[0];
+        return dateNew;
+    }
+
+    function getDateUs() {
+        var dateNew = new Date().toLocaleDateString('en-US');
+        // var dateNew = date.toLocaleDateString('en-US');
+        return dateNew;
+    }
+
+    function getDateIndo() {
+        var dateNew = new Date().toLocaleDateString('en-GB');
+        return dateNew;
+    }
+
+    function calculate() {
+        //var birth_dt = new Date();
+        var d_arr2 = $('#birth_dt').val().split("/");
+        var fromDate = d_arr2[1] + '-' + d_arr2[0] + '-' + d_arr2[2];
+        var toDate = new Date();
+
+        try {
+            // document.getElementById('usia').innerHTML = '';
+            $('p#usia').val('');
+
+            var result = getDateDifference(new Date(fromDate), new Date(toDate));
+
+            if (result && !isNaN(result.years)) {
+                document.getElementById('usia').innerHTML = '<b>' +
+                    result.years + '</b> Tahun, <b>' +
+                    result.months + '</b> Bulan, <b>' +
+                    result.days + '</b> Hari';
+
+                $('#tahun').val(result.years);
+                $('#bulan').val(result.months);
+                $('#hari').val(result.days);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function getDateDifference(startDate, endDate) {
+        if (startDate > endDate) {
+            console.error('Start date must be before end date');
+            return null;
+        }
+        var startYear = startDate.getFullYear();
+        var startMonth = startDate.getMonth();
+        var startDay = startDate.getDate();
+
+        var endYear = endDate.getFullYear();
+        var endMonth = endDate.getMonth();
+        var endDay = endDate.getDate();
+
+        // We calculate February based on end year as it might be a leep year which might influence the number of days.
+        var february = (endYear % 4 == 0 && endYear % 100 != 0) || endYear % 400 == 0 ? 29 : 28;
+        var daysOfMonth = [31, february, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+        var startDateNotPassedInEndYear = (endMonth < startMonth) || endMonth == startMonth && endDay < startDay;
+        var years = endYear - startYear - (startDateNotPassedInEndYear ? 1 : 0);
+
+        var months = (12 + endMonth - startMonth - (endDay < startDay ? 1 : 0)) % 12;
+
+        // (12 + ...) % 12 makes sure index is always between 0 and 11
+        var days = startDay <= endDay ? endDay - startDay : daysOfMonth[(12 + endMonth - 1) % 12] - startDay + endDay;
+
+        return {
+            years: years,
+            months: months,
+            days: days
+        };
+    }
+</script>
+
+<script>
+    $(document).ready(function() {
+        displayItems();
+    });
+
+    function addItemFromJson() {
+
+        var itemList = JSON.parse(localStorage.getItem('items-edit')) || [];
+
+        if (itemInput.val().trim() !== '') {
+            var total = calculateTotal(quantityInput.val(), rateInput.val(), discountInput.val(), taxInput.val());
+            itemList.forEach(function(item, index) {
+                itemList.push({
+                    item_cd: item.item_cd,
+                    item: item.item,
+                    quantity: item.quantity,
+                    rate: item.rate,
+                    discount: item.discount,
+                    tax: item.tax,
+                    total: item.total
+                });
+            });
+            localStorage.setItem('items-edit', JSON.stringify(itemList));
+            clearInputFields();
+            displayItems();
+        }
+    }
+
+    function addItem() {
+        var itemInput = $('#itemInput');
+        var quantityInput = $('#quantityInput');
+        var rateInput = $('#rateInput');
+        var discountInput = $('#discountInput');
+        var taxInput = $('#taxInput');
+
+        var itemList = JSON.parse(localStorage.getItem('items')) || [];
+
+        if (itemInput.val().trim() !== '') {
+            var total = calculateTotal(quantityInput.val(), rateInput.val(), discountInput.val(), taxInput.val());
+            itemList.push({
+                item: itemInput.val(),
+                quantity: quantityInput.val(),
+                rate: rateInput.val(),
+                discount: discountInput.val(),
+                tax: taxInput.val(),
+                total: total
+            });
+            localStorage.setItem('items-edit', JSON.stringify(itemList));
+            clearInputFields();
+            displayItems();
+        }
+    }
+
+    function calculateTotal(quantity, rate, discount, tax) {
+        var subtotal = quantity * rate;
+        var discountedAmount = subtotal * (1 - discount / 100);
+        var taxedAmount = discountedAmount + (discountedAmount * (tax / 100));
+        return taxedAmount.toFixed(2);
+    }
+
+    function displayItems() {
+        var itemList = JSON.parse(localStorage.getItem('items-edit')) || [];
+        var itemTableBody = $('.tabledetail tbody');
+        itemTableBody.empty();
+
+        itemList.forEach(function(item, index) {
+            var row = $('<tr>');
+            row.append('<td><input type="checkbox"class="item-checkbox"></td>');
+            row.append('<td>' + item.item_cd + '</td>');
+            row.append('<td>' + item.item + '</td>');
+            row.append('<td class="text-right"><input type="text" min="1" maxlength="3" size="3" class="quantity-input" value="' + item.quantity + '"></td>');
+            row.append('<td class="text-right">' + formatNumber(item.rate) + '</td>');
+            row.append('<td>' + item.discount + '%</td>');
+            row.append('<td>' + item.tax + '%</td>');
+            row.append('<td class="text-right">' + formatNumber(item.total) + '</td>');
+            itemTableBody.append(row);
+        });
+
+        attachQuantityChangeEvent();
+        updateGrandTotal();
+    }
+
+    function attachQuantityChangeEvent() {
+        $('.quantity-input').off('input').on('input', function() {
+            var index = $(this).closest('tr').index();
+            var newQuantity = $(this).val();
+
+            updateQuantity(index, newQuantity);
+            updateTotal(index);
+            displayItems();
+        });
+    }
+
+    function updateQuantity(index, newQuantity) {
+        var itemList = JSON.parse(localStorage.getItem('items-edit')) || [];
+        itemList[index].quantity = newQuantity;
+        localStorage.setItem('items-edit', JSON.stringify(itemList));
+    }
+
+    function updateTotal(index) {
+        var itemList = JSON.parse(localStorage.getItem('items-edit')) || [];
+        var quantity = itemList[index].quantity;
+        var rate = itemList[index].rate;
+        var discount = itemList[index].discount;
+        var tax = itemList[index].tax;
+
+        var newTotal = calculateTotal(quantity, rate, discount, tax);
+        itemList[index].total = newTotal;
+        localStorage.setItem('items-edit', JSON.stringify(itemList));
+    }
+
+    function postData() {
+        var itemList = JSON.parse(localStorage.getItem('items-edit')) || [];
+        // console.log('Sending data to the server:', itemList);
+
+        // Mengonversi JSON ke objek JavaScript
+        const parsedData = JSON.parse(localStorage.getItem('items-edit')) || [];
+
+        // Memeriksa duplikat berdasarkan nilai kunci 'item_cd'
+        const seenItemCds = new Set();
+        const duplicates = [];
+
+        parsedData.forEach(item => {
+            if (seenItemCds.has(item.item_cd)) {
+                duplicates.push(item);
+            } else {
+                seenItemCds.add(item.item_cd);
+            }
+        });
+
+        if (parsedData.length == 0) {
+            //sweet alert
+            Swal.fire({
+                icon: 'warning',
+                title: 'Warning',
+                text: 'Item Masih Kosong!',
+                //footer: '<a href="">Why do I have this issue?</a>'
+            });
+
+        } else {
+
+            // Menampilkan data duplikat jika ada
+            if (duplicates.length > 0) {
+                //sweet alert
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Warning',
+                    text: 'Terdapat Item Duplikat!',
+                    //footer: '<a href="">Why do I have this issue?</a>'
+                });
+
+            } else {
+
+                if ($("#no_registrasi").val() !== '') {
+                    $.ajax({
+                        type: 'POST',
+                        url: '<?= site_url('kasir/store'); ?>',
+                        contentType: 'application/json',
+                        data: JSON.stringify(itemList),
+                        success: function(response) {
+                            const msg = JSON.parse(response) || [];
+                            const winPdf = window.open("<?= base_url('/kasir/print/') ?>" + msg.no_kwitansi.substr(1, 12));
+                            winPdf.print();
+                            // console.log('Data successfully sent to the server:', response.no_kwitansi);
+                            localStorage.removeItem('items-edit');
+                            // Tambahkan logika atau tindakan lain yang diperlukan setelah sukses
+                            displayItems();
+                            removeNoRegistrasi();
+
+                        },
+                        error: function(error) {
+                            // console.error('Error sending data to the server:', error);
+                            // Tambahkan logika atau tindakan lain yang diperlukan pada kesalahan
+                        }
+                    });
+
+                } else {
+                    //sweet alert
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Warning',
+                        text: 'No Registrasi Belum Dipilih!',
+                        //footer: '<a href="">Why do I have this issue?</a>'
+                    });
+                }
+
+            }
+        }
+
+    }
+
+    function removeNoRegistrasi() {
+        $.ajax({
+            method: "GET",
+            url: "<?= site_url('kasir/removenoregistrasi'); ?>",
+            success: function(data) {
+                $("#no_registrasi").val('');
+            }
+        });
+    }
+
+    function clearInputFields() {
+        $('#itemInput, #quantityInput, #rateInput, #discountInput, #taxInput').val('');
+    }
+
+    function selectAllItems() {
+        var checkboxes = $('.item-checkbox');
+        var selectAllCheckbox = $('#selectAllCheckbox');
+
+        checkboxes.prop('checked', selectAllCheckbox.prop('checked'));
+    }
+
+    function deleteSelectedItems() {
+        var checkboxes = $('.item-checkbox');
+        var itemList = JSON.parse(localStorage.getItem('items-edit')) || [];
+        var updatedItemList = [];
+
+        checkboxes.each(function(index) {
+            if (!$(this).prop('checked')) {
+                updatedItemList.push(itemList[index]);
+            }
+        });
+
+        localStorage.setItem('items-edit', JSON.stringify(updatedItemList));
+        displayItems();
+    }
+
+    function formatNumber(number) {
+        return parseFloat(number).toLocaleString('in-IN', {
+            minimumFractionDigits: 2
+        });
+    }
+
+    function updateGrandTotal() {
+        var itemList = JSON.parse(localStorage.getItem('items-edit')) || [];
+        var grandTotal = itemList.reduce(function(total, item) {
+            return total + parseFloat(item.total);
+        }, 0);
+
+        $('#grandTotal').text(formatNumber(grandTotal));
+    }
+
+    function fetchDataListRegistrasi() {
+        $.ajax({
+            method: "GET",
+            url: "<?= site_url('kasir/registrasi'); ?>",
+            success: function(data) {
+                $('#live_fetchDataRegistrasi').html(data);
+            }
+        });
+    }
+    // fetchDataListRegistrasi();
+
+    $(document).on('click', '#registrasi', function() {
+        fetchDataListRegistrasi();
+        $('#modalformregistrasi').modal('show');
+
+    });
+
+    //add no_registrasi to input no.registrasi on row double click
+    $(document).on("dblclick", "tr#addRowRegistrasi", function() {
+        var no_registrasi = $(this).data("id");
+
+        $.ajax({
+            url: "<?= site_url('kasir/setnoregistrasi'); ?>",
+            method: "GET",
+            data: {
+                no_registrasi: no_registrasi
+            },
+            dataType: "JSON",
+            success: function(response) {
+                $("#no_registrasi").val(no_registrasi);
+                $('#modalformregistrasi').modal('hide');
+            }
+        })
+
+    });
+
+    //add no_registrasi to input (no.registrasi) on click
+    $(document).on("click", ".addRegistrasi", function() {
+        var no_registrasi = $(this).data("id");
+        $.ajax({
+            url: "<?= site_url('kasir/setnoregistrasi'); ?>",
+            method: "GET",
+            data: {
+                no_registrasi: no_registrasi
+            },
+            dataType: "JSON",
+            success: function(response) {
+                $("#no_registrasi").val(no_registrasi);
+                $('#modalformregistrasi').modal('hide');
+            }
+        })
+
+    });
+
+    function fetchDataListItem() {
+        $.ajax({
+            method: "GET",
+            url: "<?= site_url('kasir/item'); ?>",
+            success: function(data) {
+                $('#live_fetchDataItem').html(data);
+            }
+        });
+    }
+    // fetchDataListItem();
+
+    $(document).on('click', '#item', function() {
+        fetchDataListItem();
+        $('#modalformitem').modal('show');
+    });
+
+    //insert barang ke list pembelian detail pada saat baris data barang di double klik
+    $(document).on("dblclick", "tr#addRowItem", function() {
+        var item_cd = $(this).data("id");
+
+        $.ajax({
+            url: "<?= site_url('tmstitem/fetchSingleData'); ?>",
+            method: "GET",
+            data: {
+                item_cd: item_cd
+            },
+            dataType: "JSON",
+            success: function(response) {
+
+                var itemList = JSON.parse(localStorage.getItem('items-edit')) || [];
+
+                if (item_cd.trim() !== '') {
+                    var total = calculateTotal(1, response.data.unitprice, 0, (response.data.isvat === 1 ? 11 : 0));
+                    itemList.push({
+                        item_cd: response.data.item_cd,
+                        item: response.data.item_nm,
+                        quantity: 1,
+                        rate: response.data.unitprice,
+                        discount: 0,
+                        tax: (response.data.isvat === 1 ? 11 : 0),
+                        total: total
+                    });
+                    localStorage.setItem('items-edit', JSON.stringify(itemList));
+                    // clearInputFields();
+                    displayItems();
+                }
+
+                $('#modalformitem').modal('hide');
+
+            }
+        })
+    });
+
+    //insert barang ke list pembelian detail pada saat kolom item_cd di klik
+    $(document).on("click", ".addItem", function() {
+        var item_cd = $(this).data("id");
+
+        $.ajax({
+            url: "<?= site_url('tmstitem/fetchSingleData'); ?>",
+            method: "GET",
+            data: {
+                item_cd: item_cd
+            },
+            dataType: "JSON",
+            success: function(response) {
+
+                var itemList = JSON.parse(localStorage.getItem('items-edit')) || [];
+
+                if (item_cd.trim() !== '') {
+                    var total = calculateTotal(1, response.data.unitprice, 0, (response.data.isvat === 1 ? 11 : 0));
+                    itemList.push({
+                        item_cd: response.data.item_cd,
+                        item: response.data.item_nm,
+                        quantity: 1,
+                        rate: response.data.unitprice,
+                        discount: 0,
+                        tax: (response.data.isvat === 1 ? 11 : 0),
+                        total: total
+                    });
+                    localStorage.setItem('items-edit', JSON.stringify(itemList));
+                    // clearInputFields();
+                    displayItems();
+                }
+
+                $('#modalformitem').modal('hide');
+
+            }
+        })
+    });
+
+    $(document).on('click', '.view', function() {
+        var item_cd = $(this).data('item_cd');
+
+        $.ajax({
+            url: "<?= site_url('tmstitem/fetchSingleData'); ?>",
+            method: "GET",
+            data: {
+                item_cd: item_cd
+            },
+            dataType: "JSON",
+            success: function(response) {
+
+                var itemList = JSON.parse(localStorage.getItem('items-edit')) || [];
+
+                if (itemInput.val().trim() !== '') {
+                    var total = calculateTotal(1, response.data.unitprice, 0, (response.data.isvat === 1 ? 11 : 0));
+                    itemList.push({
+                        item_cd: response.data.item_cd,
+                        item: response.data.item_nm,
+                        quantity: 1,
+                        rate: response.data.unitprice,
+                        discount: 0,
+                        tax: (response.data.isvat === 11 ? 1 : 0),
+                        total: total
+                    });
+                    localStorage.setItem('items-edit', JSON.stringify(itemList));
+                    // clearInputFields();
+                    displayItems();
+                }
+
+
+            }
+        })
+    });
+
+    //insert melalui scanner atau ketik manual penjualan
+    $('#scan_input').keypress(function(e) {
+        if (e.which == 13) {
+            var item_cd = $('#scan_input').val();
+
+            $.ajax({
+                url: "<?= site_url('tmstitem/fetchSingleData'); ?>",
+                method: "GET",
+                data: {
+                    item_cd: item_cd
+                },
+                dataType: "JSON",
+                success: function(response) {
+
+                    var itemList = JSON.parse(localStorage.getItem('items-edit')) || [];
+
+                    if (item_cd.trim() !== '') {
+                        var total = calculateTotal(1, response.data.unitprice, 0, (response.data.isvat === 1 ? 11 : 0));
+                        itemList.push({
+                            item_cd: response.data.item_cd,
+                            item: response.data.item_nm,
+                            quantity: 1,
+                            rate: response.data.unitprice,
+                            discount: 0,
+                            tax: (response.data.isvat === 1 ? 11 : 0),
+                            total: total
+                        });
+                        localStorage.setItem('items-edit', JSON.stringify(itemList));
+                        // clearInputFields();
+                        displayItems();
+                    }
+                    $("#scan_input").val('');
+                    $("#scan_input").focus();
+
+                },
+                error: function() {
+                    alert('Kode Tidak Terdaftar!');
+                    $("#scan_input").focus();
+                }
+            })
+        }
+    });
+
+    function fetchDataListBilling() {
+        $.ajax({
+            method: "GET",
+            url: "<?= site_url('kasir/listbilling'); ?>",
+            success: function(data) {
+                $('#live_fetchDataBilling').html(data);
+            }
+        });
+    }
+
+    $(document).on('click', '.billing', function() {
+        fetchDataListBilling();
+        $('#modalformbilling').modal('show');
+    });
+
+    $(document).on('click', '.print', function() {
+        var no_kwitansi = $(this).data('no_kwitansi');
+        const winPdf = window.open("<?= base_url('/kasir/print/') ?>" + no_kwitansi);
+        winPdf.print();
+    });
+
+    $(document).on('click', '.edit', function() {
+        var no_kwitansi = $(this).data('no_kwitansi');
+        window.open("<?= base_url('/kasir/edit/') ?>" + no_kwitansi);
+    });
+</script>
+
+
+<?= $this->endSection('script'); ?>

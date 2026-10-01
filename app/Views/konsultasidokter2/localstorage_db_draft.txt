@@ -1,0 +1,243 @@
+<script>
+    const menu = "konsultasi";
+
+    // Simpan draft ke localStorage
+    function saveDraft() {
+        alert("=== MENYIMPAN KE LOCALSTORAGE ===");
+
+        const noreg = $('#no_registrasi').text();
+        alert("Nomor registrasi: " + (noreg || '(kosong)'));
+
+        if (!noreg || noreg === '') {
+            alert("❌ GAGAL! Tidak ada nomor registrasi");
+            return;
+        }
+
+        // Kumpulkan semua data form
+        const draft = {
+            id: `${menu}_${noreg}`,
+            last_saved: new Date().toLocaleString(),
+
+            /** Anamnesa */
+            responden: $('input[name="responden"]:checked').val(),
+            keluhan_utama: $('#keluhan_utama').val(),
+            riwayat_penyakit_dahulu: $('#riwayat_penyakit_dahulu').val(),
+            riwayat_perjalanan_keluhan: $('#riwayat_perjalanan_keluhan').val(),
+            riwayat_operasi_pengobatan: $('#riwayat_operasi_pengobatan').val(),
+            riwayat_penyakit_keluarga: $('#riwayat_penyakit_keluarga').val(),
+            riwayat_penyakit_sekarang: $('#riwayat_penyakit_sekarang').val(),
+            riwayat_lain: $('#riwayat_lain').val(),
+
+            /** Pemeriksaan */
+            kondisi_umum: $('#kondisi_umum').val(),
+            tinggi_badan: $('#tinggi_badan').val(),
+            berat_badan: $('#berat_badan').val(),
+            bmi: $('#bmi').val(),
+            suhu: $('#suhu').val(),
+            sistolik: $('#sistolik').val(),
+            diastolik: $('#diastolik').val(),
+            denyut_nadi: $('#denyut_nadi').val(),
+            laju_nafas: $('#laju_nafas').val(),
+            kondisi_khusus: $('#kondisi_khusus').val(),
+            pemeriksaan_tambahan: $('#pemeriksaan_tambahan').val(),
+
+            /** Diagnosa */
+            diagnosa_utama: $('#diagnosa_utama').val(),
+            icd10_utama: $('#icd10_utama').val(),
+            klasifikasi_utama: $('input[name="klasifikasi_utama"]:checked').val(),
+            diagnosa_sekunder: $('#diagnosa_sekunder').val(),
+            icd10_sekunder: $('#icd10_sekunder').val(),
+            klasifikasi_sekunder: $('input[name="klasifikasi_sekunder"]:checked').val(),
+
+            /** Rujukan */
+            ket_rujukan: $('#ket_rujukan').val(),
+            dokter_rujukan: $('#dokter_rujukan').val(),
+            user_rujukan: $('#user_rujukan').val(),
+            summernotet: $('#summernotet').val()
+        };
+
+        // Simpan ke localStorage
+        try {
+            localStorage.setItem(draft.id, JSON.stringify(draft));
+            alert("✅ DRAFT BERHASIL DISIMPAN!\n\nID: " + draft.id + "\nKeluhan: " + (draft.keluhan_utama || '-') + "\nWaktu: " + draft.last_saved);
+
+            // Tampilkan semua draft yang tersimpan
+            showAllDrafts();
+
+        } catch (e) {
+            alert("❌ GAGAL MENYIMPAN!\nError: " + e.message);
+        }
+    }
+
+    // Load draft dari localStorage
+    function loadDraft(noreg) {
+        alert("=== MEMUAT DARI LOCALSTORAGE ===");
+        alert("Mencari draft untuk: " + noreg);
+
+        if (!noreg || noreg === '') {
+            alert("❌ Tidak ada nomor registrasi");
+            return;
+        }
+
+        const id = `${menu}_${noreg}`;
+        const data = localStorage.getItem(id);
+
+        if (!data) {
+            alert("ℹ️ TIDAK ADA DRAFT untuk pasien ini\nID: " + id);
+            return;
+        }
+
+        try {
+            const draft = JSON.parse(data);
+            alert("✅ DRAFT DITEMUKAN!\n\nID: " + draft.id + "\nKeluhan: " + (draft.keluhan_utama || '-') + "\nTerakhir simpan: " + draft.last_saved);
+
+            // Isi form dengan data
+            alert("Mengisi form...");
+
+            /** Anamnesa */
+            if (draft.responden) $(`input[name="responden"][value="${draft.responden}"]`).prop('checked', true);
+            $('#keluhan_utama').val(draft.keluhan_utama || '');
+            $('#riwayat_penyakit_dahulu').val(draft.riwayat_penyakit_dahulu || '');
+            $('#riwayat_perjalanan_keluhan').val(draft.riwayat_perjalanan_keluhan || '');
+            $('#riwayat_operasi_pengobatan').val(draft.riwayat_operasi_pengobatan || '');
+            $('#riwayat_penyakit_keluarga').val(draft.riwayat_penyakit_keluarga || '');
+            $('#riwayat_penyakit_sekarang').val(draft.riwayat_penyakit_sekarang || '');
+            $('#riwayat_lain').val(draft.riwayat_lain || '');
+
+            /** Pemeriksaan */
+            $('#kondisi_umum').val(draft.kondisi_umum || '');
+            $('#tinggi_badan').val(draft.tinggi_badan || '');
+            $('#berat_badan').val(draft.berat_badan || '');
+            $('#bmi').val(draft.bmi || '');
+            $('#suhu').val(draft.suhu || '');
+            $('#sistolik').val(draft.sistolik || '');
+            $('#diastolik').val(draft.diastolik || '');
+            $('#denyut_nadi').val(draft.denyut_nadi || '');
+            $('#laju_nafas').val(draft.laju_nafas || '');
+            $('#kondisi_khusus').val(draft.kondisi_khusus || '');
+            $('#pemeriksaan_tambahan').val(draft.pemeriksaan_tambahan || '');
+
+            /** Diagnosa */
+            $('#diagnosa_utama').val(draft.diagnosa_utama || '');
+            $('#icd10_utama').val(draft.icd10_utama || '').trigger('change');
+            if (draft.klasifikasi_utama) $(`input[name="klasifikasi_utama"][value="${draft.klasifikasi_utama}"]`).prop('checked', true);
+            $('#diagnosa_sekunder').val(draft.diagnosa_sekunder || '');
+            $('#icd10_sekunder').val(draft.icd10_sekunder || '').trigger('change');
+            if (draft.klasifikasi_sekunder) $(`input[name="klasifikasi_sekunder"][value="${draft.klasifikasi_sekunder}"]`).prop('checked', true);
+
+            /** Rujukan */
+            $('#ket_rujukan').val(draft.ket_rujukan || '');
+            $('#dokter_rujukan').val(draft.dokter_rujukan || '').trigger('change');
+            $('#user_rujukan').val(draft.user_rujukan || '');
+            $('#summernotet').val(draft.summernotet || '');
+
+            alert("✅ SEMUA DATA BERHASIL DIMUAT!");
+
+        } catch (e) {
+            alert("❌ GAGAL MEMUAT DATA!\nError: " + e.message);
+        }
+    }
+
+    // Hapus draft
+    function deleteDraft(noreg) {
+        if (!noreg) return;
+        const id = `${menu}_${noreg}`;
+        localStorage.removeItem(id);
+        alert("✅ Draft dihapus untuk: " + noreg);
+    }
+
+    // Lihat semua draft yang tersimpan
+    function showAllDrafts() {
+        let total = 0;
+        let message = "=== DRAFT TERSIMPAN ===\n\n";
+
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(menu)) {
+                total++;
+                try {
+                    const data = JSON.parse(localStorage.getItem(key));
+                    message += total + ". " + key + "\n";
+                    message += "   Keluhan: " + (data.keluhan_utama || '-').substring(0, 30) + "\n";
+                    message += "   Waktu: " + (data.last_saved || '-') + "\n\n";
+                } catch (e) {}
+            }
+        }
+
+        if (total === 0) {
+            alert("📭 Belum ada draft yang tersimpan");
+        } else {
+            alert(message + "Total: " + total + " draft");
+        }
+    }
+
+    // Hapus semua draft
+    function clearAllDrafts() {
+        if (confirm("Hapus SEMUA draft?")) {
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith(menu)) {
+                    localStorage.removeItem(key);
+                }
+            }
+            alert("✅ Semua draft telah dihapus!");
+        }
+    }
+
+    // Auto-save setiap 10 detik
+    setInterval(() => {
+        const noreg = $('#no_registrasi').text();
+        if (noreg && noreg !== '') {
+            const keluhan = $('#keluhan_utama').val();
+            if (keluhan && keluhan !== '') {
+                alert("Auto-save: Menyimpan draft untuk " + noreg);
+                saveDraft();
+            }
+        }
+    }, 10000);
+
+    $(document).ready(function() {
+        alert("=== SCRIPT LOCALSTORAGE SIAP ===");
+
+        // Tombol Simpan Draft
+        $('#draft_button_all').on('click', function(e) {
+            e.preventDefault();
+            alert("Tombol 'Simpan Sebagai Draft' diklik!");
+            saveDraft();
+        });
+
+        // Event untuk pilih pasien
+        $(document).on('click', '.pilihpasien', function() {
+            var noreg = $(this).data('no_registrasi');
+            alert("Tombol pilih pasien diklik!\nNo Registrasi: " + noreg);
+            $('#no_registrasi').text(noreg);
+            loadDraft(noreg);
+        });
+
+        // Submit form
+        $('#formKonsultasi').off('submit').on('submit', function(e) {
+            e.preventDefault();
+            const noreg = $('#no_registrasi').text();
+            deleteDraft(noreg); // ← Ini yang menghapus draft
+            // this.submit(); // Kirim data ke server
+        });
+
+        // Tambah tombol floating untuk debugging
+        $('body').append(`
+            <div style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; background: #343a40; padding: 8px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+                <button id="btnShowAll" style="margin: 2px; padding: 5px 10px;" class="btn btn-info btn-sm">📋 Lihat Semua</button>
+                <button id="btnClearAll" style="margin: 2px; padding: 5px 10px;" class="btn btn-danger btn-sm">🗑️ Hapus Semua</button>
+            </div>
+        `);
+
+        $('#btnShowAll').on('click', function() {
+            showAllDrafts();
+        });
+
+        $('#btnClearAll').on('click', function() {
+            clearAllDrafts();
+        });
+
+        alert("✅ Script siap!\n\nCara test:\n1. Klik pilih pasien\n2. Isi Keluhan Utama\n3. Klik Simpan Draft\n4. Refresh halaman\n5. Klik pasien yang sama\n6. Data akan muncul kembali");
+    });
+</script>

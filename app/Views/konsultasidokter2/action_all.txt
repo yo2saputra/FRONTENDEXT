@@ -1,0 +1,1098 @@
+SELECT a.*,b.fullname,b.gender,b.birth_dt,b.addr,b.mobile_no,c.nama_dokter,d.SubUnit_Name as tujuan_registrasi_desc,e.fld_desc as gender_desc,f.asr_nm as asr_nm,no_kwitansi FROM tregistrasi a                               
+   LEFT JOIN tmst_patient b ON a.no_pasien = b.patient_no                               
+   LEFT JOIN tf_list_namadokter() c ON a.dokter = c.emp_cd                            
+   --LEFT JOIN (SELECT * FROM tmst_polyclinic) d ON a.tujuan_registrasi = d.poly_cd  
+   LEFT JOIN (SELECT SubUnit_Name FROM MI_Sub_Unit) d ON a.tujuan_registrasi = d.SubUnit_ID  
+   LEFT JOIN tf_tfieldvalue('gender') e ON b.gender = e.fld_valu                              
+   LEFT JOIN (SELECT asr_nm FROM tasuransi) f ON a.asr_cd = f.asr_cd                    
+   LEFT JOIN (SELECT no_kwitansi,no_registrasi FROM tbilling) g ON a.no_registrasi = g.no_registrasi                      
+   WHERE tgl_praktek = CONVERT (date, GETDATE()) AND hadir = 1 AND dokter = 'E0028' AND status = 'PM'
+
+<?php
+
+namespace App\Controllers;
+
+use App\Controllers\BaseController;
+// use Config\Services;
+use App\Libraries\Pdfgenerator;
+// use CodeIgniter\I18n\Time;
+
+
+
+class Konsultasidokter extends BaseController
+{
+
+    protected $data;
+    protected $server;
+    protected $client;
+
+    public function __construct()
+    {
+        $this->session = session();
+        $uri = service('uri');
+        $this->server = $_ENV['APP_API'];
+    }
+   
+   function action_all()
+    {
+        if ($this->request->isAJAX()) {
+        if ($this->request->getVar('action_all') == 'Add') {
+            helper(['form', 'url']);
+
+            $validation = \Config\Services::validation();
+            $valid = $this->validate([
+
+                'patient_no' => [
+                    'label' => 'Code',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'keluhan_utama' => [
+                    'label' => 'Keluhan Utama',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'riwayat_perjalanan_keluhan' => [
+                    'label' => 'Riwayat Perjalanan Keluhan',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                // 'riwayat_penyakit_sekarang' => [
+                //     'label' => 'Riwayat Penyakit Sekarang',
+                //     'rules' => 'required',
+                //     'errors' => [
+                //         //'required' => '{field} tidak boleh kosong',
+                //         //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                //     ]
+                // ],
+                'riwayat_penyakit_dahulu' => [
+                    'label' => 'Riwayat Penyakit Dahulu',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'riwayat_operasi_pengobatan' => [
+                    'label' => 'Riwayat Operasi Pengobatan',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'riwayat_penyakit_keluarga' => [
+                    'label' => 'Riwayat Penyakit Keluarga',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'riwayat_lain' => [
+                    'label' => 'Riwayat Lain',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'kondisi_umum' => [
+                    'label' => 'Kondisi Umum',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'tinggi_badan' => [
+                    'label' => 'Tinggi Badan',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'berat_badan' => [
+                    'label' => 'Berat Badan',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'suhu' => [
+                    'label' => 'Suhu',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'sistolik' => [
+                    'label' => 'Sistolik',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'diastolik' => [
+                    'label' => 'Diastolik',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'denyut_nadi' => [
+                    'label' => 'Denyut_nadi',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'laju_nafas' => [
+                    'label' => 'Laju Nafas',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'kondisi_khusus' => [
+                    'label' => 'Kondisi Khusus',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'pemeriksaan_tambahan' => [
+                    'label' => 'Pemeriksaan Tambahan',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'diagnosa_utama' => [
+                    'label' => 'Diagnosa Utama',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'diagnosa_sekunder' => [
+                    'label' => 'Diagnosa Sekunder',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ]
+            ]);
+            if (!$valid) {
+                $msg = [
+                    'error' => [
+                        'keluhan_utama' => $validation->getError('keluhan_utama'), //START ANAMNESA
+                        'riwayat_perjalanan_keluhan' => $validation->getError('riwayat_perjalanan_keluhan'),
+                        'riwayat_penyakit_sekarang' => $validation->getError('riwayat_penyakit_sekarang'),
+                        'riwayat_penyakit_dahulu' => $validation->getError('riwayat_penyakit_dahulu'),
+                        'riwayat_operasi_pengobatan' => $validation->getError('riwayat_operasi_pengobatan'),
+                        'riwayat_penyakit_keluarga' => $validation->getError('riwayat_penyakit_keluarga'),
+                        'riwayat_lain' => $validation->getError('riwayat_lain'), //END ANAMNESA
+
+                        'kondisi_umum' => $validation->getError('kondisi_umum'), //START PERIKSA
+                        'kondisi_khusus' => $validation->getError('kondisi_khusus'),
+                        'tinggi_badan' => $validation->getError('tinggi_badan'),
+                        'berat_badan' => $validation->getError('berat_badan'),
+                        'sistolik' => $validation->getError('sistolik'),
+                        'diastolik' => $validation->getError('diastolik'),
+                        'denyut_nadi' => $validation->getError('denyut_nadi'),
+                        'laju_nafas' => $validation->getError('laju_nafas'),
+                        'suhu' => $validation->getError('suhu'),
+                        'pemeriksaan_tambahan' => $validation->getError('pemeriksaan_tambahan'), //END PERIKSA
+
+                        'diagnosa_utama' => $validation->getError('diagnosa_utama'), //START DIAGNOSA
+                        'diagnosa_sekunder' => $validation->getError('diagnosa_sekunder') //END DIAGNOSA
+                    ]
+                ];
+            } else {
+
+                /*--START SET STATUS PM--*/
+                // helper curl request
+                helper(['restclient']);
+                $no_registrasi = $this->request->getVar('no_registrasi');
+                // endpoint
+                $url = "$this->server/tregistrasi/konsultasidokter/$no_registrasi";
+                // client request
+                $response = akses_restapi('PATCH', $url, []);
+                $data['response_data'] = json_decode($response, true);
+                /*--END SET STATUS PM--*/
+
+                /*--START GET NO KWT--*/
+                // helper curl request
+                helper(['restclient']);
+                // endpoint
+                $url = "$this->server/billing/getkwtby/$no_registrasi";
+                // client request
+                $response = akses_restapi('GET', $url, []);
+                $data['response_data'] = json_decode($response, true);
+                $no_kwitansi = $data['response_data'][0]['no_kwitansi'];
+                /*--END GET NO KWT--*/
+
+                /*--START ANAMNESA--*/
+                // helper curl request
+                helper(['restclient']);
+                // endpoint
+                $url = "$this->server/tregistrasianamnesa/double";
+                // form params
+                $data = [
+                    "no_registrasi" => str_replace(" ", "_", trim($this->request->getVar('no_registrasi'))),
+                    "responden" => $this->request->getVar('responden'),
+                    "keluhan_utama" => $this->request->getVar('keluhan_utama'),
+                    "riwayat_perjalanan_keluhan" => $this->request->getVar('riwayat_perjalanan_keluhan'),
+                    "riwayat_penyakit_sekarang" => $this->request->getVar('riwayat_penyakit_sekarang'),
+                    "riwayat_penyakit_dahulu" => $this->request->getVar('riwayat_penyakit_dahulu'),
+                    "riwayat_operasi_pengobatan" => $this->request->getVar('riwayat_operasi_pengobatan'),
+                    "riwayat_penyakit_keluarga" => $this->request->getVar('riwayat_penyakit_keluarga'),
+                    "riwayat_lain" => $this->request->getVar('riwayat_lain')
+                ];
+                // client request
+                $response = akses_restapi('POST', $url, $data);
+                /*--END ANAMNESA--*/
+
+                /*--START PERIKSA--*/
+                // helper curl request
+                helper(['restclient']);
+                // endpoint
+                $url = "$this->server/tregistrasiperiksa/double";
+                // form params
+                $data = [
+                    "no_registrasi" => str_replace(" ", "_", trim($this->request->getVar('no_registrasi'))),
+                    "kondisi_umum" => $this->request->getVar('kondisi_umum'),
+                    "kondisi_khusus" => $this->request->getVar('kondisi_khusus'),
+                    "tinggi_badan" => $this->request->getVar('tinggi_badan'),
+                    "berat_badan" => $this->request->getVar('berat_badan'),
+                    "sistolik" => $this->request->getVar('sistolik'),
+                    "diastolik" => $this->request->getVar('diastolik'),
+                    "denyut_nadi" => $this->request->getVar('denyut_nadi'),
+                    "laju_nafas" => $this->request->getVar('laju_nafas'),
+                    "suhu" => $this->request->getVar('suhu'),
+                    "bmi" => $this->request->getVar('bmi'),
+                    "pemeriksaan_tambahan" => $this->request->getVar('pemeriksaan_tambahan')
+                ];
+                // client request
+                $response = akses_restapi('POST', $url, $data);
+                /*--END PERIKSA--*/
+
+                /*--START DIAGNOSA--*/
+                // helper curl request
+                helper(['restclient']);
+                // endpoint
+                $url = "$this->server/tregistrasidiagnosa/double";
+                // form params
+                $data = [
+                    "no_registrasi" => str_replace(" ", "_", trim($this->request->getVar('no_registrasi'))),
+                    "diagnosa_utama" => $this->request->getVar('diagnosa_utama'),
+                    "icd10_utama" => $this->request->getVar('icd10_utama'),
+                    "klasifikasi_utama" => $this->request->getVar('klasifikasi_utama'),
+                    "diagnosa_sekunder" => $this->request->getVar('diagnosa_sekunder'),
+                    "icd10_sekunder" => $this->request->getVar('icd10_sekunder'),
+                    "klasifikasi_sekunder" => $this->request->getVar('klasifikasi_sekunder'),
+                    "diagnosa_utama_sta" => $this->request->getVar('diagnosa_utama_sta'),
+                    "diagnosa_sekunder_sta" => $this->request->getVar('diagnosa_sekunder_sta')
+                ];
+                // client request
+                $response = akses_restapi('POST', $url, $data);
+                /*--END DIAGNOSA--*/
+
+                /*--START ALERGI--*/
+                $alergi = $this->request->getVar('kategori_alergi');
+                $alergi_no = $this->request->getVar('alergi_no');
+                $number = count($alergi);
+                if ($number > 0) {
+                    for ($i = 0; $i < $number; $i++) {
+
+                        if (trim($alergi[$i] != '') && trim($alergi_no[$i] != '')) {
+
+                            // helper curl request
+                            helper(['restclient']);
+
+                            // endpoint
+                            $url = "$this->server/tpatientalergi/update";
+
+                            // form params
+                            $data = [
+                                "patient_no" => str_replace(" ", "_", trim($this->request->getVar('patient_no'))),
+                                "kategori" => $this->request->getVar('kategori_alergi')[$i],
+                                "komponen" => $this->request->getVar('komponen_alergi')[$i],
+                                "reaksi" => $this->request->getVar('reaksi_alergi')[$i],
+                                "alergi_no" => $this->request->getVar('alergi_no')[$i]
+                            ];
+                            // client request
+                            $response = akses_restapi('PUT', $url, $data);
+                        } else {
+                            // helper curl request
+                            helper(['restclient']);
+
+                            // endpoint
+                            $url = "$this->server/tpatientalergi/insert";
+
+                            // form params
+                            $data = [
+                                "patient_no" => str_replace(" ", "_", trim($this->request->getVar('patient_no'))),
+                                "kategori" => $this->request->getVar('kategori_alergi')[$i],
+                                "komponen" => $this->request->getVar('komponen_alergi')[$i],
+                                "reaksi" => $this->request->getVar('reaksi_alergi')[$i]
+                            ];
+                            // client request
+                            $response = akses_restapi('POST', $url, $data);
+                        }
+                    }
+                }
+                /*--END ALERGI--*/
+
+                /*--START DIAGNOSA TAMBAHAN--*/
+                $diagnosa = $this->request->getVar('diagnosa_tambahan');
+                $seq_id = $this->request->getVar('seq_id');
+                if (isset($diagnosa)) {
+                    $number = count($diagnosa);
+                    if ($number > 0) {
+                        for ($i = 0; $i < $number; $i++) {
+
+                            if (trim($diagnosa[$i] != '') && trim($seq_id[$i] != '')) {
+                                // helper curl request
+                                helper(['restclient']);
+                                // endpoint
+                                $url = "$this->server/tregistrasidiagnosatambahan/update";
+                                // form params
+                                $data = [
+                                    "no_registrasi" => str_replace(" ", "_", trim($this->request->getVar('no_registrasi'))),
+                                    "diagnosa" => $this->request->getVar('diagnosa_tambahan')[$i],
+                                    "icd10" => $this->request->getVar('icd10_tambahan')[$i],
+                                    "klasifikasi" => $this->request->getVar('klasifikasi_tambahan')[$i],
+                                    "seq_id" => $this->request->getVar('seq_id')[$i]
+                                ];
+                                // client request
+                                $response = akses_restapi('PUT', $url, $data);
+                            } else {
+                                // helper curl request
+                                helper(['restclient']);
+                                // endpoint
+                                $url = "$this->server/tregistrasidiagnosatambahan/insert";
+                                // form params
+                                $data = [
+                                    "no_registrasi" => str_replace(" ", "_", trim($this->request->getVar('no_registrasi'))),
+                                    "diagnosa" => $this->request->getVar('diagnosa_tambahan')[$i],
+                                    "icd10" => $this->request->getVar('icd10_tambahan')[$i],
+                                    "klasifikasi" => $this->request->getVar('klasifikasi_tambahan')[$i]
+                                ];
+                                // client request
+                                $response = akses_restapi('POST', $url, $data);
+                            }
+                        }
+                    }
+                }
+                /*--END DIAGNOSA TAMBAHAN--*/
+
+                /*--START LABORATORIUM--*/
+                $layanan = $this->request->getVar('layanan');
+
+                $item_cd = $this->request->getVar('item_cd');
+                $number = count($layanan);
+                if ($number > 0) {
+                    for ($i = 0; $i < $number; $i++) {
+
+                        if (trim($layanan[$i] != '') && trim($item_cd[$i] != '')) {
+
+                            // helper curl request
+                            helper(['restclient']);
+
+                            // endpoint
+                            // $url = "$this->server/tregistrasilayananlrmu/update";
+                            $url = "$this->server/tregistrasilayananlrmu/insert";
+
+                            // form params
+                            $data = [
+                                "no_registrasi" => str_replace(" ", "_", trim($this->request->getVar('no_registrasi'))),
+                                "layanan" => $this->request->getVar('layanan')[$i],
+                                "item_cd" => $this->request->getVar('item_cd')[$i]
+                            ];
+
+                            // client request
+                            // $response = akses_restapi('PUT', $url, $data);
+                            $response = akses_restapi('POST', $url, $data);
+
+                            // helper curl request
+                            helper(['restclient']);
+
+                            // endpoint
+                            $urlbillingdetail = "$this->server/billingdetail/insert";
+
+                            // form params
+                            // $databillingdetail = [
+                            //     'no_kwitansi' => $no_kwitansi,
+                            //     'item_cd' => $this->request->getVar('item_cd')[$i],
+                            //     'jumlah' => $this->request->getVar('qty')[$i],
+                            //     'tarif' => $this->request->getVar('biaya_amount')[$i],
+                            //     'potongan' => $this->request->getVar('item_cd')[$i],
+                            //     'pajak' => $this->request->getVar('pajak')[$i],
+                            //     'total' => $this->request->getVar('harga')[$i]
+                            // ];
+
+                            $databillingdetail = [
+                                'no_kwitansi' => $no_kwitansi,
+                                'item_cd' => $this->request->getVar('item_cd')[$i],
+                                'jumlah' => $this->request->getVar('qty')[$i],
+                                'tarif' => $this->request->getVar('biaya_amount')[$i],
+                                'potongan' => $this->request->getVar('reduksi')[$i],
+                                'pajak' => $this->request->getVar('pajak')[$i],
+                                'total' => $this->request->getVar('harga')[$i]
+                            ];
+
+                            // $databillingdetail = [
+                            //     'no_kwitansi' => $no_kwitansi,
+                            //     'item_cd' => 'PD1408',
+                            //     'jumlah' => '1',
+                            //     'tarif' => '50.000',
+                            //     'potongan' => '5.000',
+                            //     'pajak' => '11',
+                            //     'total' => '45.000'
+                            // ];
+
+                            // client request
+                            // $response = akses_restapi('POST', $urlbillingdetail, $databillingdetail);
+                            akses_restapi('POST', $urlbillingdetail, $databillingdetail);
+                        } else {
+                            // helper curl request
+                            helper(['restclient']);
+
+                            // endpoint
+                            $url = "$this->server/tregistrasilayananlrmu/insert";
+
+                            // form params
+                            $data = [
+                                "no_registrasi" => str_replace(" ", "_", trim($this->request->getVar('no_registrasi'))),
+                                "layanan" => $this->request->getVar('layanan')[$i],
+                                "item_cd" => $this->request->getVar('item_cd')[$i]
+                            ];
+                            // client request
+                            $response = akses_restapi('POST', $url, $data);
+
+                            // helper curl request
+                            helper(['restclient']);
+
+                            // endpoint
+                            $urlbillingdetail = "$this->server/billingdetail/insert";
+
+                            // form params
+                            // $databillingdetail = [
+                            //     'no_kwitansi' => 'KWT202410383',
+                            //     'item_cd' => $this->request->getVar('item_cd')[$i],
+                            //     'jumlah' => $this->request->getVar('qty')[$i],
+                            //     'tarif' => $this->request->getVar('biaya_amount')[$i],
+                            //     'potongan' => $this->request->getVar('item_cd')[$i],
+                            //     'pajak' => $this->request->getVar('pajak')[$i],
+                            //     'total' => $this->request->getVar('harga')[$i]
+                            // ];
+
+                            // $databillingdetail = [
+                            //     'no_kwitansi' => 'KWT202410383',
+                            //     'item_cd' => $this->request->getVar('item_cd')[$i],
+                            //     'jumlah' => $this->request->getVar('qty')[$i],
+                            //     'tarif' => $this->request->getVar('biaya_amount')[$i],
+                            //     'potongan' => $this->request->getVar('item_cd')[$i],
+                            //     'pajak' => $this->request->getVar('pajak')[$i],
+                            //     'total' => $this->request->getVar('harga')[$i]
+                            // ];
+
+                            $databillingdetail = [
+                                'no_kwitansi' => 'KWT202410389',
+                                'item_cd' => 'PD1408',
+                                'jumlah' => '1',
+                                'tarif' => '50.000',
+                                'potongan' => '5.000',
+                                'pajak' => '11',
+                                'total' => '45.000'
+                            ];
+
+                            // dd($databillingdetail);
+
+
+                            // client request
+                            // $response = akses_restapi('POST', $urlbillingdetail, $databillingdetail);
+                            akses_restapi('POST', $urlbillingdetail, $databillingdetail);
+                        }
+                    }
+                }
+                /*--END LABORATORIUM--*/
+
+
+                /*--START LABORATORIUM AI REFACTOR--*/
+                // helper(['restclient']);
+
+                // $layanan = $this->request->getVar('layanan');
+                // $item_cd = $this->request->getVar('item_cd');
+                // $no_registrasi = str_replace(" ", "_", trim($this->request->getVar('no_registrasi')));
+                // $no_kwitansi = $this->request->getVar('no_kwitansi');
+
+                // if (is_array($layanan) && count($layanan) > 0) {
+                //     foreach ($layanan as $i => $layananVal) {
+                //         $itemVal = $item_cd[$i] ?? '';
+                //         if (trim($layananVal) != '' && trim($itemVal) != '') {
+                //             $data = [
+                //                 "no_registrasi" => $no_registrasi,
+                //                 "layanan" => $layananVal,
+                //                 "item_cd" => $itemVal
+                //             ];
+                //             akses_restapi('POST', "$this->server/tregistrasilayananlrmu/insert", $data);
+
+                //             $databillingdetail = [
+                //                 'no_kwitansi' => $no_kwitansi,
+                //                 'item_cd' => $itemVal,
+                //                 'jumlah' => $this->request->getVar('qty')[$i],
+                //                 'tarif' => $this->request->getVar('biaya_amount')[$i],
+                //                 'potongan' => $this->request->getVar('reduksi')[$i],
+                //                 'pajak' => $this->request->getVar('pajak')[$i],
+                //                 'total' => $this->request->getVar('harga')[$i]
+                //             ];
+                //             akses_restapi('POST', "$this->server/billingdetail/insert", $databillingdetail);
+                //         }
+                //     }
+                // }
+                /*--END LABORATORIUM--*/
+
+                /*--START TINDAKAN--*/
+                // helper curl request
+                helper(['restclient']);
+                // endpoint
+                $url = "$this->server/tregistrasitindakan/double";
+                // form params
+                $data = [
+                    "no_registrasi" => str_replace(" ", "_", trim($this->request->getVar('no_registrasi'))),
+                    "resep" => $this->request->getVar('resep'),
+                    "laboratorium" => $this->request->getVar('laboratorium'),
+                    "radiologi" => $this->request->getVar('radiologi'),
+                    "prosedur_primer" => $this->request->getVar('prosedur_primer'),
+                    "prosedur_skunder" => $this->request->getVar('prosedur_skunder'),
+                    "tatalaksana" => $this->request->getVar('tatalaksana'),
+                    "reduksi" => $this->request->getVar('reduksi')
+                ];
+                // client request
+                $response = akses_restapi('POST', $url, $data);
+                /*--END TINDAKAN--*/
+
+                $msg = [
+                    'success' => 'data berhasil di create!'
+                ];
+            }
+
+            echo json_encode($msg);
+        }
+
+        if ($this->request->getVar('action_all') == 'Draft') {
+            helper(['form', 'url']);
+
+            $validation = \Config\Services::validation();
+            $valid = $this->validate([
+                // 'patient_no' => [
+                //     'label' => 'Code',
+                //     'rules' => 'required',
+                //     'errors' => [
+                //         //'required' => '{field} tidak boleh kosong',
+                //         //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                //     ]
+                // ],
+                'keluhan_utama' => [
+                    'label' => 'Keluhan Utama',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'riwayat_perjalanan_keluhan' => [
+                    'label' => 'Riwayat Perjalanan Keluhan',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                // 'riwayat_penyakit_sekarang' => [
+                //     'label' => 'Riwayat Penyakit Sekarang',
+                //     'rules' => 'required',
+                //     'errors' => [
+                //         //'required' => '{field} tidak boleh kosong',
+                //         //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                //     ]
+                // ],
+                'riwayat_penyakit_dahulu' => [
+                    'label' => 'Riwayat Penyakit Dahulu',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'riwayat_operasi_pengobatan' => [
+                    'label' => 'Riwayat Operasi Pengobatan',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'riwayat_penyakit_keluarga' => [
+                    'label' => 'Riwayat Penyakit Keluarga',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'riwayat_lain' => [
+                    'label' => 'Riwayat Lain',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'kondisi_umum' => [
+                    'label' => 'Kondisi Umum',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'tinggi_badan' => [
+                    'label' => 'Tinggi Badan',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'berat_badan' => [
+                    'label' => 'Berat Badan',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'suhu' => [
+                    'label' => 'Suhu',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'sistolik' => [
+                    'label' => 'Sistolik',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'diastolik' => [
+                    'label' => 'Diastolik',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'denyut_nadi' => [
+                    'label' => 'Denyut_nadi',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'laju_nafas' => [
+                    'label' => 'Laju Nafas',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'kondisi_khusus' => [
+                    'label' => 'Kondisi Khusus',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'pemeriksaan_tambahan' => [
+                    'label' => 'Pemeriksaan Tambahan',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'diagnosa_utama' => [
+                    'label' => 'Diagnosa Utama',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ],
+                'diagnosa_sekunder' => [
+                    'label' => 'Diagnosa Sekunder',
+                    'rules' => 'required',
+                    'errors' => [
+                        //'required' => '{field} tidak boleh kosong',
+                        //'is_unique' => '{field} tidak boleh ada yang sama, silahkan coba yang lain'
+                    ]
+                ]
+            ]);
+            if (!$valid) {
+                $msg = [
+                    'error' => [
+                        'keluhan_utama' => $validation->getError('keluhan_utama'), //START ANAMNESA
+                        'riwayat_perjalanan_keluhan' => $validation->getError('riwayat_perjalanan_keluhan'),
+                        'riwayat_penyakit_sekarang' => $validation->getError('riwayat_penyakit_sekarang'),
+                        'riwayat_penyakit_dahulu' => $validation->getError('riwayat_penyakit_dahulu'),
+                        'riwayat_operasi_pengobatan' => $validation->getError('riwayat_operasi_pengobatan'),
+                        'riwayat_penyakit_keluarga' => $validation->getError('riwayat_penyakit_keluarga'),
+                        'riwayat_lain' => $validation->getError('riwayat_lain'), //END ANAMNESA
+
+                        'kondisi_umum' => $validation->getError('kondisi_umum'), //START PERIKSA
+                        'kondisi_khusus' => $validation->getError('kondisi_khusus'),
+                        'tinggi_badan' => $validation->getError('tinggi_badan'),
+                        'berat_badan' => $validation->getError('berat_badan'),
+                        'sistolik' => $validation->getError('sistolik'),
+                        'diastolik' => $validation->getError('diastolik'),
+                        'denyut_nadi' => $validation->getError('denyut_nadi'),
+                        'laju_nafas' => $validation->getError('laju_nafas'),
+                        'suhu' => $validation->getError('suhu'),
+                        'pemeriksaan_tambahan' => $validation->getError('pemeriksaan_tambahan'), //END PERIKSA
+
+                        'diagnosa_utama' => $validation->getError('diagnosa_utama'), //START DIAGNOSA
+                        'diagnosa_sekunder' => $validation->getError('diagnosa_sekunder') //END DIAGNOSA
+                    ]
+                ];
+            } else {
+
+                /*--START SET STATUS DRAFT--*/
+                // helper curl request
+                helper(['restclient']);
+                $no_registrasi = $this->request->getVar('no_registrasi');
+                // endpoint
+                $url = "$this->server/tregistrasi/draft/$no_registrasi";
+                // client request
+                $response = akses_restapi('PATCH', $url, []);
+                $data['response_data'] = json_decode($response, true);
+                /*--END SET STATUS DRAFT--*/
+
+                /*--START ANAMNESA--*/
+                // helper curl request
+                helper(['restclient']);
+                // endpoint
+                $url = "$this->server/tregistrasianamnesa/double";
+                // form params
+                $data = [
+                    "no_registrasi" => str_replace(" ", "_", trim($this->request->getVar('no_registrasi'))),
+                    "responden" => $this->request->getVar('responden'),
+                    "keluhan_utama" => $this->request->getVar('keluhan_utama'),
+                    "riwayat_perjalanan_keluhan" => $this->request->getVar('riwayat_perjalanan_keluhan'),
+                    "riwayat_penyakit_sekarang" => $this->request->getVar('riwayat_penyakit_sekarang'),
+                    "riwayat_penyakit_dahulu" => $this->request->getVar('riwayat_penyakit_dahulu'),
+                    "riwayat_operasi_pengobatan" => $this->request->getVar('riwayat_operasi_pengobatan'),
+                    "riwayat_penyakit_keluarga" => $this->request->getVar('riwayat_penyakit_keluarga'),
+                    "riwayat_lain" => $this->request->getVar('riwayat_lain')
+                ];
+                // client request
+                $response = akses_restapi('POST', $url, $data);
+                /*--END ANAMNESA--*/
+
+                /*--START PERIKSA--*/
+                // helper curl request
+                helper(['restclient']);
+                // endpoint
+                $url = "$this->server/tregistrasiperiksa/double";
+                // form params
+                $data = [
+                    "no_registrasi" => str_replace(" ", "_", trim($this->request->getVar('no_registrasi'))),
+                    "kondisi_umum" => $this->request->getVar('kondisi_umum'),
+                    "kondisi_khusus" => $this->request->getVar('kondisi_khusus'),
+                    "tinggi_badan" => $this->request->getVar('tinggi_badan'),
+                    "berat_badan" => $this->request->getVar('berat_badan'),
+                    "sistolik" => $this->request->getVar('sistolik'),
+                    "diastolik" => $this->request->getVar('diastolik'),
+                    "denyut_nadi" => $this->request->getVar('denyut_nadi'),
+                    "laju_nafas" => $this->request->getVar('laju_nafas'),
+                    "suhu" => $this->request->getVar('suhu'),
+                    "bmi" => $this->request->getVar('bmi'),
+                    "pemeriksaan_tambahan" => $this->request->getVar('pemeriksaan_tambahan')
+                ];
+                // client request
+                $response = akses_restapi('POST', $url, $data);
+                /*--END PERIKSA--*/
+
+                /*--START DIAGNOSA--*/
+                // helper curl request
+                helper(['restclient']);
+                // endpoint
+                $url = "$this->server/tregistrasidiagnosa/double";
+                // form params
+                $data = [
+                    "no_registrasi" => str_replace(" ", "_", trim($this->request->getVar('no_registrasi'))),
+                    "diagnosa_utama" => $this->request->getVar('diagnosa_utama'),
+                    "icd10_utama" => $this->request->getVar('icd10_utama'),
+                    "klasifikasi_utama" => $this->request->getVar('klasifikasi_utama'),
+                    "diagnosa_sekunder" => $this->request->getVar('diagnosa_sekunder'),
+                    "icd10_sekunder" => $this->request->getVar('icd10_sekunder'),
+                    "klasifikasi_sekunder" => $this->request->getVar('klasifikasi_sekunder'),
+                    "diagnosa_utama_sta" => $this->request->getVar('diagnosa_utama_sta'),
+                    "diagnosa_sekunder_sta" => $this->request->getVar('diagnosa_sekunder_sta')
+                ];
+                // client request
+                $response = akses_restapi('POST', $url, $data);
+                /*--END DIAGNOSA--*/
+
+                /*--START ALERGI--*/
+                $alergi = $this->request->getVar('kategori_alergi');
+                $alergi_no = $this->request->getVar('alergi_no');
+                $number = count($alergi);
+                if ($number > 0) {
+                    for ($i = 0; $i < $number; $i++) {
+
+                        if (trim($alergi[$i] != '') && trim($alergi_no[$i] != '')) {
+
+                            // helper curl request
+                            helper(['restclient']);
+
+                            // endpoint
+                            $url = "$this->server/tpatientalergi/update";
+
+                            // form params
+                            $data = [
+                                "patient_no" => str_replace(" ", "_", trim($this->request->getVar('patient_no'))),
+                                "kategori" => $this->request->getVar('kategori_alergi')[$i],
+                                "komponen" => $this->request->getVar('komponen_alergi')[$i],
+                                "reaksi" => $this->request->getVar('reaksi_alergi')[$i],
+                                "alergi_no" => $this->request->getVar('alergi_no')[$i]
+                            ];
+                            // client request
+                            $response = akses_restapi('PUT', $url, $data);
+                        } else {
+                            // helper curl request
+                            helper(['restclient']);
+
+                            // endpoint
+                            $url = "$this->server/tpatientalergi/insert";
+
+                            // form params
+                            $data = [
+                                "patient_no" => str_replace(" ", "_", trim($this->request->getVar('patient_no'))),
+                                "kategori" => $this->request->getVar('kategori_alergi')[$i],
+                                "komponen" => $this->request->getVar('komponen_alergi')[$i],
+                                "reaksi" => $this->request->getVar('reaksi_alergi')[$i]
+                            ];
+                            // client request
+                            $response = akses_restapi('POST', $url, $data);
+                        }
+                    }
+                }
+                /*--END ALERGI--*/
+
+                /*--START DIAGNOSA TAMBAHAN--*/
+                $diagnosa = $this->request->getVar('diagnosa_tambahan');
+                $seq_id = $this->request->getVar('seq_id');
+                if (isset($diagnosa)) {
+                    $number = count($diagnosa);
+                    if ($number > 0) {
+                        for ($i = 0; $i < $number; $i++) {
+                            if (trim($diagnosa[$i] != '') && trim($seq_id[$i] != '')) {
+                                // helper curl request
+                                helper(['restclient']);
+                                // endpoint
+                                $url = "$this->server/tregistrasidiagnosatambahan/update";
+                                // form params
+                                $data = [
+                                    "no_registrasi" => str_replace(" ", "_", trim($this->request->getVar('no_registrasi'))),
+                                    "diagnosa" => $this->request->getVar('diagnosa_tambahan')[$i],
+                                    "icd10" => $this->request->getVar('icd10_tambahan')[$i],
+                                    "klasifikasi" => $this->request->getVar('klasifikasi_tambahan')[$i],
+                                    "seq_id" => $this->request->getVar('seq_id')[$i]
+                                ];
+                                // client request
+                                $response = akses_restapi('PUT', $url, $data);
+                            } else {
+                                // helper curl request
+                                helper(['restclient']);
+                                // endpoint
+                                $url = "$this->server/tregistrasidiagnosatambahan/insert";
+                                // form params
+                                $data = [
+                                    "no_registrasi" => str_replace(" ", "_", trim($this->request->getVar('no_registrasi'))),
+                                    "diagnosa" => $this->request->getVar('diagnosa_tambahan')[$i],
+                                    "icd10" => $this->request->getVar('icd10_tambahan')[$i],
+                                    "klasifikasi" => $this->request->getVar('klasifikasi_tambahan')[$i]
+                                ];
+                                // client request
+                                $response = akses_restapi('POST', $url, $data);
+                            }
+                        }
+                    }
+                }
+                /*--END DIAGNOSA TAMBAHAN--*/
+
+                /*--START LABORATORIUM--*/
+                $layanan = $this->request->getVar('layanan');
+                $item_cd = $this->request->getVar('item_cd');
+                $number = count($layanan);
+                if ($number > 0) {
+                    for ($i = 0; $i < $number; $i++) {
+
+                        if (trim($layanan[$i] != '') && trim($item_cd[$i] != '')) {
+
+                            // helper curl request
+                            helper(['restclient']);
+
+                            // endpoint
+                            if ($layanan == 'LY_003') {
+                                $url = "$this->server/tregistrasilayananradiologi/update";
+                            }
+
+                            if ($layanan == 'LY_004') {
+                                $url = "$this->server/tregistrasilayananlrmu/update";
+                            }
+
+
+                            // form params
+                            $data = [
+                                "no_registrasi" => str_replace(" ", "_", trim($this->request->getVar('no_registrasi'))),
+                                "layanan" => $this->request->getVar('layanan')[$i],
+                                "item_cd" => $this->request->getVar('item_cd')[$i]
+                            ];
+                            // client request
+                            $response = akses_restapi('PUT', $url, $data);
+                        } else {
+                            // helper curl request
+                            helper(['restclient']);
+
+                            // endpoint
+                            if ($layanan == 'LY_003') {
+                                $url = "$this->server/tregistrasilayananradiologi/insert";
+                            }
+
+                            if ($layanan == 'LY_004') {
+                                $url = "$this->server/tregistrasilayananlrmu/insert";
+                            }
+
+                            // form params
+                            $data = [
+                                "no_registrasi" => str_replace(" ", "_", trim($this->request->getVar('no_registrasi'))),
+                                "layanan" => $this->request->getVar('layanan')[$i],
+                                "item_cd" => $this->request->getVar('item_cd')[$i]
+                            ];
+                            // client request
+                            $response = akses_restapi('POST', $url, $data);
+                        }
+                    }
+                }
+                /*--END LABORATORIUM--*/
+
+                // /*--START LABORATORIUM--*/
+                // $layanan = $this->request->getVar('layanan_lab');
+                // $item_cd = $this->request->getVar('item_cd_lab');
+                // $number = count($layanan);
+                // if ($number > 0) {
+                //     for ($i = 0; $i < $number; $i++) {
+
+                //         if (trim($layanan[$i] != '') && trim($item_cd[$i] != '')) {
+
+                //             // helper curl request
+                //             helper(['restclient']);
+
+                //             // endpoint
+                //             $url = "$this->server/tregistrasilayananradiologi/update";
+
+                //             // form params
+                //             $data = [
+                //                 "no_registrasi" => str_replace(" ", "_", trim($this->request->getVar('no_registrasi'))),
+                //                 "layanan" => $this->request->getVar('layanan_lab')[$i],
+                //                 "item_cd" => $this->request->getVar('item_cd_lab')[$i]
+                //             ];
+                //             // client request
+                //             $response = akses_restapi('PUT', $url, $data);
+                //         } else {
+                //             // helper curl request
+                //             helper(['restclient']);
+
+                //             // endpoint
+                //             $url = "$this->server/tregistrasilayananradiologi/insert";
+
+                //             // form params
+                //             $data = [
+                //                 "no_registrasi" => str_replace(" ", "_", trim($this->request->getVar('no_registrasi'))),
+                //                 "layanan" => $this->request->getVar('layanan_lab')[$i],
+                //                 "item_cd" => $this->request->getVar('item_cd_lab')[$i]
+                //             ];
+                //             // client request
+                //             $response = akses_restapi('POST', $url, $data);
+                //         }
+                //     }
+                // }
+                // /*--END LABORATORIUM--*/
+
+                /*--START TINDAKAN--*/
+                // helper curl request
+                helper(['restclient']);
+                // endpoint
+                $url = "$this->server/tregistrasitindakan/double";
+                // form params
+                $data = [
+                    "no_registrasi" => str_replace(" ", "_", trim($this->request->getVar('no_registrasi'))),
+                    "resep" => $this->request->getVar('resep'),
+                    "laboratorium" => $this->request->getVar('laboratorium'),
+                    "radiologi" => $this->request->getVar('radiologi'),
+                    "prosedur_primer" => $this->request->getVar('prosedur_primer'),
+                    "prosedur_skunder" => $this->request->getVar('prosedur_skunder'),
+                    "tatalaksana" => $this->request->getVar('tatalaksana'),
+                    "reduksi" => $this->request->getVar('reduksi')
+                ];
+                // client request
+                $response = akses_restapi('POST', $url, $data);
+                /*--END TINDAKAN--*/
+
+                $msg = [
+                    'success' => 'data berhasil di create!'
+                ];
+                // } 
+            }
+
+            echo json_encode($msg);
+        }
+
+
+        } else {
+             exit('Maaf tidak dapat diproses!');
+        }
+    }
+}
